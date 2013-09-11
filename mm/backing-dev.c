@@ -650,7 +650,7 @@ int pdflush_proc_obsolete(struct ctl_table *table, int write,
 {
 	char kbuf[] = "0\n";
 
-	if (*ppos) {
+	if (*ppos || *lenp < sizeof(kbuf)) {
 		*lenp = 0;
 		return 0;
 	}
