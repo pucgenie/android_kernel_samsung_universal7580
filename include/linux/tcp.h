@@ -166,7 +166,9 @@ struct tcp_sock {
 				 * sum(delta(snd_una)), or how many bytes
 				 * were acked.
 				 */
- 	u32	snd_una;	/* First byte we want an ack for	*/
+	struct u64_stats_sync syncp; /* protects 64bit vars (cf tcp_get_info()) */
+
+	u32	snd_una;	/* First byte we want an ack for	*/
  	u32	snd_sml;	/* Last byte of the most recently transmitted small packet */
 	u32	rcv_tstamp;	/* timestamp of last received ACK (for keepalives) */
 	u32	lsndtime;	/* timestamp of last sent data packet (for restart window) */
