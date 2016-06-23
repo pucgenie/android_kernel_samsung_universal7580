@@ -73,10 +73,11 @@ SECTIONS
 		*(.got)			/* Global offset table		*/
 	}
 
+	_etext = .;			/* End of text section */
+
 	RO_DATA(PAGE_SIZE)
 	EXCEPTION_TABLE(8)
 	NOTES
-	_etext = .;			/* End of text and rodata section */
 
 	. = ALIGN(PAGE_SIZE);
 	__init_begin = .;
