@@ -142,7 +142,9 @@ void mms_input_event_handler(struct mms_ts_info *info, u8 sz, u8 *buf)
 		int id = (tmp[0] & MIP_EVENT_INPUT_ID) - 1;
 		int x = tmp[2] | ((tmp[1] & 0xf) << 8);
 		int y = tmp[3] | (((tmp[1] >> 4) & 0xf) << 8);
+#ifdef CONFIG_SEC_FACTORY
 		int pressure = tmp[4];
+#endif
 		//int size = tmp[5];		// sumsize
 		int touch_major = tmp[6];
 		int touch_minor = tmp[7];
@@ -199,10 +201,6 @@ void mms_input_event_handler(struct mms_ts_info *info, u8 sz, u8 *buf)
 									BTN_TOOL_FINGER, 0);
 					}
 					info->finger_state[id] = 0;
-					tsp_debug_err(true, &client->dev,
-						"R[%d] V[%02x%02x%02x] tc:%d\n",
-						id, info->boot_ver_ic, info->core_ver_ic,
-						info->config_ver_ic, info->touch_count);
 				}
 
 				continue;
@@ -228,15 +226,6 @@ void mms_input_event_handler(struct mms_ts_info *info, u8 sz, u8 *buf)
 			if (info->finger_state[id] == 0){
 				info->finger_state[id] = 1;
 				info->touch_count++;
-#ifdef CONFIG_SAMSUNG_PRODUCT_SHIP
-				tsp_debug_info(true, &client->dev,
-					"P[%d] z:%d p:%d m:%d,%d tc:%d\n",
-					id, pressure, palm, touch_major, touch_minor, info->touch_count);
-#else
-				tsp_debug_err(true, &client->dev,
-					"P[%d] (%d, %d) z:%d p:%d m:%d,%d tc:%d\n",
-					id, x, y, pressure, palm, touch_major, touch_minor, info->touch_count);
-#endif
 			}
 		}
 	}
