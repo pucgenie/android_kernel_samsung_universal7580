@@ -37,7 +37,6 @@
 #include <linux/timer.h>
 #include <linux/sched/rt.h>
 #include <trace/events/writeback.h>
-#include <linux/version.h>
 
 /*
  * Sleep at most 200ms at a time in balance_dirty_pages().
@@ -68,13 +67,13 @@ static long ratelimit_pages = 32;
 /*
  * Start background writeback (via writeback threads) at this percentage
  */
-int dirty_background_ratio;
+int dirty_background_ratio = 10;
 
 /*
  * dirty_background_bytes starts at 0 (disabled) so that it is a function of
  * dirty_background_ratio * the amount of dirtyable memory
  */
-unsigned long dirty_background_bytes =  25 * 1024 * 1024;
+unsigned long dirty_background_bytes;
 
 /*
  * free highmem will not be subtracted from the total free memory
@@ -85,13 +84,13 @@ int vm_highmem_is_dirtyable;
 /*
  * The generator of dirty data starts writeback at this percentage
  */
-int vm_dirty_ratio;
+int vm_dirty_ratio = 20;
 
 /*
  * vm_dirty_bytes starts at 0 (disabled) so that it is a function of
  * vm_dirty_ratio * the amount of dirtyable memory
  */
-unsigned long vm_dirty_bytes = 50 * 1024 * 1024;
+unsigned long vm_dirty_bytes;
 
 /*
  * The interval between `kupdate'-style writebacks
@@ -1374,16 +1373,6 @@ pause:
 					  period,
 					  pause,
 					  start_time);
-		/* Just collecting approximate value. No lock required. */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
-		bdi->last_thresh = thresh;
-		bdi->last_nr_dirty = dirty;
-#else
-		bdi->last_thresh = dirty_thresh;
-		bdi->last_nr_dirty = nr_dirty;
-#endif
-		bdi->paused_total += pause;
-
 		__set_current_state(TASK_KILLABLE);
 		io_schedule_timeout(pause);
 

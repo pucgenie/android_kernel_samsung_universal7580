@@ -400,7 +400,9 @@ static int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr* nlh)
 			err = -EPERM;
 			goto errout_free;
 		}
+
  		rule->uid_range = nla_get_kuid_range(tb);
+
  		if (!uid_range_set(&rule->uid_range) ||
 		    !uid_lte(rule->uid_range.start, rule->uid_range.end))
 			goto errout_free;

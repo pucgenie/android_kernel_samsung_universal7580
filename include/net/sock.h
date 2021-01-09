@@ -1,4 +1,3 @@
-/* Copyright (c) 2015 Samsung Electronics Co., Ltd. */
 /*
  * INET		An implementation of the TCP/IP protocol suite for the LINUX
  *		operating system.  INET is implemented using the  BSD Socket
@@ -38,15 +37,6 @@
  *		as published by the Free Software Foundation; either version
  *		2 of the License, or (at your option) any later version.
  */
-/*
- *  Changes:
- *  KwnagHyun Kim <kh0304.kim@samsung.com> 2015/07/08
- *  Baesung Park  <baesung.park@samsung.com> 2015/07/08
- *  Vignesh Saravanaperumal <vignesh1.s@samsung.com> 2015/07/08
- *    Add codes to share UID/PID information
- *
- */
-
 #ifndef _SOCK_H
 #define _SOCK_H
 
@@ -78,8 +68,6 @@
 #include <net/dst.h>
 #include <net/checksum.h>
 #include <net/tcp_states.h>
-
-#define TCP_BACKLOG_SCALE 4
 
 struct cgroup;
 struct cgroup_subsys;
@@ -409,8 +397,6 @@ struct sock {
 	kuid_t			sk_uid;
 	u32			sk_classid;
 	struct cg_proto		*sk_cgrp;
-	uid_t			knox_uid;
-	pid_t			knox_pid;
 	void			(*sk_state_change)(struct sock *sk);
 	void			(*sk_data_ready)(struct sock *sk, int bytes);
 	void			(*sk_write_space)(struct sock *sk);
@@ -798,7 +784,7 @@ static inline bool sk_rcvqueues_full(const struct sock *sk, const struct sk_buff
 static inline __must_check int sk_add_backlog(struct sock *sk, struct sk_buff *skb,
 					      unsigned int limit)
 {
-	if (sk_rcvqueues_full(sk, skb, limit * TCP_BACKLOG_SCALE))
+	if (sk_rcvqueues_full(sk, skb, limit))
 		return -ENOBUFS;
 
 	/*

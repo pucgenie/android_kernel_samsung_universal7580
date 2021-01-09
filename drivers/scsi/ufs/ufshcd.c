@@ -53,10 +53,6 @@
 #include "fips-fmp-info.h"
 #endif
 
-#if defined(CONFIG_UFS_FMP_ECRYPT_FS)
-#include "fmp_derive_iv.h"
-#endif
-
 #define UFSHCD_ENABLE_INTRS	(UTP_TRANSFER_REQ_COMPL |\
 				 UTP_TASK_REQ_COMPL |\
 				 UFSHCD_ERROR_MASK)
@@ -1104,7 +1100,7 @@ static int ufshcd_map_sg(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 	struct scsi_cmnd *cmd;
 	int sg_segments;
 	int i;
-#if defined(CONFIG_UFS_FMP_DM_CRYPT) || defined(CONFIG_UFS_FMP_ECRYPT_FS)
+#if defined(CONFIG_UFS_FMP_DM_CRYPT)
 	unsigned int sector = 0;
 	unsigned int sector_key = UFS_BYPASS_SECTOR_BEGIN;
 	static unsigned int fmp_key_flag = 0;
@@ -1139,13 +1135,7 @@ static int ufshcd_map_sg(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 			prd_table[i].upper_addr =
 				cpu_to_le32(upper_32_bits(sg->dma_address));
 			hba->transferred_sector += prd_table[i].size;
-#if defined(CONFIG_UFS_FMP_DM_CRYPT) || defined(CONFIG_UFS_FMP_ECRYPT_FS)
-#if defined(CONFIG_UFS_FMP_ECRYPT_FS)
-			if(test_bit(PG_sensitive_data, &sg_page(sg)->flags)) {
-				sector_key |= UFS_FILE_ENCRYPTION_SECTOR_BEGIN;
-			} else
-				sector_key &= ~UFS_FILE_ENCRYPTION_SECTOR_BEGIN;
-#endif
+#if defined(CONFIG_UFS_FMP_DM_CRYPT)
 			if (sector_key == UFS_BYPASS_SECTOR_BEGIN) {
 				SET_DAS(&prd_table[i], CLEAR);
 				SET_FAS(&prd_table[i], CLEAR);
@@ -1181,63 +1171,6 @@ static int ufshcd_map_sg(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 					}
 
 				}
-#if defined(CONFIG_UFS_FMP_ECRYPT_FS)
-				if (sector_key & UFS_FILE_ENCRYPTION_SECTOR_BEGIN) { /* file encryption */
-					unsigned int aes_alg, j;
-					int ret;
-					loff_t index;
-#ifdef CONFIG_CRYPTO_FIPS
-					char extent_iv[SHA256_HASH_SIZE];
-#else
-					char extent_iv[MD5_DIGEST_SIZE];
-#endif
-
-					/* File algorithm selector*/
-					if (!strncmp(sg_page(sg)->mapping->alg, "aes", sizeof("aes")))
-						aes_alg = AES_CBC;
-					else if (!strncmp(sg_page(sg)->mapping->alg, "aesxts", sizeof("aesxts")))
-						aes_alg = AES_XTS;
-					else {
-						dev_err(hba->dev, "Invalid file algorithm\n");
-						return -EINVAL;
-					}
-					SET_FAS(&prd_table[i], aes_alg);
-
-					/* File enc key size */
-					switch (sg_page(sg)->mapping->key_length) {
-					case 16:
-						prd_table[i].size &= ~FKL;
-						break;
-					case 32:
-					case 64:
-						prd_table[i].size |= FKL;
-						break;
-					default:
-						dev_err(hba->dev, "Invalid file key length\n");
-						return -EINVAL;
-					}
-
-					index = sg_page(sg)->index;
-					index = index - sg_page(sg)->mapping->sensitive_data_index;
-					ret = file_enc_derive_iv(sg_page(sg)->mapping, index, extent_iv);
-					if (ret) {
-						dev_err(hba->dev, "Error attemping to derive IV\n");
-						return -EINVAL;
-					}
-
-					/* File IV */
-					prd_table[i].file_iv0 = word_in(extent_iv, 3);
-					prd_table[i].file_iv1 = word_in(extent_iv, 2);
-					prd_table[i].file_iv2 = word_in(extent_iv, 1);
-					prd_table[i].file_iv3 = word_in(extent_iv, 0);
-
-					/* File Enc key*/
-					for (j = 0; j < sg_page(sg)->mapping->key_length >> 2; j++)
-						*(&prd_table[i].file_enckey0 + j) =
-							word_in(sg_page(sg)->mapping->key, (sg_page(sg)->mapping->key_length >> 2) - (j + 1));
-
-				}
-#endif
 			}
 			sector += UFSHCI_SECTOR_SIZE / MIN_SECTOR_SIZE;
 #endif

@@ -268,7 +268,6 @@
 #include <linux/crypto.h>
 #include <linux/time.h>
 #include <linux/slab.h>
-#include <linux/uid_stat.h>
 
 #include <net/icmp.h>
 #include <net/inet_common.h>
@@ -814,8 +813,8 @@ static unsigned int tcp_xmit_size_goal(struct sock *sk, u32 mss_now,
 		gso_size = max_t(u32, gso_size,
 				 sysctl_tcp_min_tso_segs * mss_now);
 
-		xmit_size_goal = min_t(u32, xmit_size_goal,
-				       sysctl_tcp_limit_output_bytes >> 1);
+		xmit_size_goal = min_t(u32, gso_size,
+				       sk->sk_gso_max_size - 1 - hlen);
 
 		xmit_size_goal = tcp_bound_to_half_wnd(tp, xmit_size_goal);
 
@@ -1250,9 +1249,6 @@ out:
 		tcp_push(sk, flags, mss_now, tp->nonagle);
 out_nopush:
 	release_sock(sk);
-
-	if (copied + copied_syn)
-		uid_stat_tcp_snd(current_uid(), copied + copied_syn);
 	return copied + copied_syn;
 
 do_fault:
@@ -1557,7 +1553,6 @@ int tcp_read_sock(struct sock *sk, read_descriptor_t *desc,
 	if (copied > 0) {
 		tcp_recv_skb(sk, seq, &offset);
 		tcp_cleanup_rbuf(sk, copied);
-		uid_stat_tcp_rcv(current_uid(), copied);
 	}
 	return copied;
 }
@@ -1962,9 +1957,6 @@ skip_copy:
 	tcp_cleanup_rbuf(sk, copied);
 
 	release_sock(sk);
-
-	if (copied > 0)
-		uid_stat_tcp_rcv(current_uid(), copied);
 	return copied;
 
 out:
@@ -1973,8 +1965,6 @@ out:
 
 recv_urg:
 	err = tcp_recv_urg(sk, msg, len, flags);
-	if (err > 0)
-		uid_stat_tcp_rcv(current_uid(), err);
 	goto out;
 
 recv_sndq:
