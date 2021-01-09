@@ -97,13 +97,6 @@ config SEC_DEBUG_LAST_KMSG
 	help
 	  This option enables /proc/last_kmsg support.
 
-config SEC_DEBUG_TIMA_LOG
-	default n
-	bool "Enable tima log support" if EMBEDDED
-	depends on SEC_DEBUG
-	help
-	  This option enables additional log buffer for tima log.
-
 comment "Samsung TN Power Management Options"
 menuconfig SEC_PM
 	bool "Samsung TN Power Management"

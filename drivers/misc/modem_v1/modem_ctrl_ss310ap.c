@@ -53,9 +53,6 @@ static irqreturn_t cp_wdt_handler(int irq, void *arg)
 	mif_disable_irq(&mc->irq_cp_wdt);
 	mif_err("%s: ERR! CP_WDOG occurred\n", mc->name);
 
-	/* Disable debug Snapshot */
-	mif_set_snapshot(false);
-
 	if (mc->phone_state == STATE_ONLINE)
 		modem_notify_event(MODEM_EVENT_WATCHDOG);
 
@@ -117,9 +114,6 @@ static void cp_active_handler(void *arg)
 
 	if (old_state != new_state) {
 		mif_err("new_state = %s\n", cp_state_str(new_state));
-
-		/* Disable debug Snapshot */
-		mif_set_snapshot(false);
 
 		if (old_state == STATE_ONLINE)
 			modem_notify_event(MODEM_EVENT_EXIT);
@@ -207,9 +201,6 @@ static int ss310ap_on(struct modem_ctl *mc)
 
 	mif_err("+++\n");
 	mif_err("cp_active:%d cp_status:%d\n", cp_active, cp_status);
-
-	/* Enable debug Snapshot */
-	mif_set_snapshot(true);
 
 	mc->phone_state = STATE_OFFLINE;
 

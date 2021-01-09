@@ -342,7 +342,7 @@ struct ufshcd_sg_entry {
 	__le32	upper_addr;
 	__le32	reserved;
 	__le32	size;
-#if defined(CONFIG_UFS_FMP_DM_CRYPT) || defined(CONFIG_UFS_FMP_ECRYPT_FS)
+#if defined(CONFIG_UFS_FMP_DM_CRYPT)
 #define FKL	BIT(26)
 #define DKL	BIT(27)
 #define SET_FAS(d, v) \
