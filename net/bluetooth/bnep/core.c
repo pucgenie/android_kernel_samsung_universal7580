@@ -451,16 +451,16 @@ static int bnep_session(void *arg)
 	struct net_device *dev = s->dev;
 	struct sock *sk = s->sock->sk;
 	struct sk_buff *skb;
-	wait_queue_t wait;
+	DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
 	BT_DBG("");
 
 	set_user_nice(current, -15);
 
-	init_waitqueue_entry(&wait, current);
 	add_wait_queue(sk_sleep(sk), &wait);
 	while (1) {
-		set_current_state(TASK_INTERRUPTIBLE);
+		/* Ensure session->terminate is updated */
+		smp_mb__before_atomic();
 
 		if (atomic_read(&s->terminate))
 			break;
@@ -482,9 +482,8 @@ static int bnep_session(void *arg)
 				break;
 		netif_wake_queue(dev);
 
-		schedule();
+		wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
 	}
-	__set_current_state(TASK_RUNNING);
 	remove_wait_queue(sk_sleep(sk), &wait);
 
 	/* Cleanup session */
@@ -511,20 +510,12 @@ static int bnep_session(void *arg)
 
 static struct device *bnep_get_device(struct bnep_session *session)
 {
-	bdaddr_t *src = &bt_sk(session->sock->sk)->src;
-	bdaddr_t *dst = &bt_sk(session->sock->sk)->dst;
-	struct hci_dev *hdev;
-	struct hci_conn *conn;
+	struct l2cap_conn *conn = l2cap_pi(session->sock->sk)->chan->conn;
 
-	hdev = hci_get_route(dst, src);
-	if (!hdev)
+	if (!conn || !conn->hcon)
 		return NULL;
 
-	conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK, dst);
-
-	hci_dev_put(hdev);
-
-	return conn ? &conn->dev : NULL;
+	return &conn->hcon->dev;
 }
 
 static struct device_type bnep_type = {
@@ -543,13 +534,14 @@ int bnep_add_connection(struct bnep_connadd_req *req, struct socket *sock)
 	if (!l2cap_is_socket(sock))
 		return -EBADFD;
 
-	baswap((void *) dst, &bt_sk(sock->sk)->dst);
-	baswap((void *) src, &bt_sk(sock->sk)->src);
+	baswap((void *) dst, &l2cap_pi(sock->sk)->chan->dst);
+	baswap((void *) src, &l2cap_pi(sock->sk)->chan->src);
 
 	/* session struct allocated as private part of net_device */
 	dev = alloc_netdev(sizeof(struct bnep_session),
-				(*req->device) ? req->device : "bnep%d",
-				bnep_net_setup);
+			   (*req->device) ? req->device : "bnep%d",
+			   NET_NAME_UNKNOWN,
+			   bnep_net_setup);
 	if (!dev)
 		return -ENOMEM;
 
@@ -628,7 +620,7 @@ int bnep_del_connection(struct bnep_conndel_req *req)
 	s = __bnep_get_session(req->dst);
 	if (s) {
 		atomic_inc(&s->terminate);
-		wake_up_process(s->task);
+		wake_up_interruptible(sk_sleep(s->sock->sk));
 	} else
 		err = -ENOENT;
 
