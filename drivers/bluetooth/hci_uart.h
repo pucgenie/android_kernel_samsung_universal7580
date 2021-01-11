@@ -48,6 +48,7 @@
 #define HCI_UART_RESET_ON_INIT	1
 #define HCI_UART_CREATE_AMP	2
 #define HCI_UART_INIT_PENDING	3
+#define HCI_UART_EXT_CONFIG	4
 
 struct hci_uart;
 
@@ -81,6 +82,7 @@ struct hci_uart {
 /* HCI_UART proto flag bits */
 #define HCI_UART_PROTO_SET	0
 #define HCI_UART_REGISTERED	1
+#define HCI_UART_PROTO_READY	2
 
 /* TX states  */
 #define HCI_UART_SENDING	1
