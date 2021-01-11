@@ -831,7 +831,7 @@ static int setup_netdev(struct l2cap_chan *chan, struct lowpan_dev **dev)
 	unsigned long flags;
 
 	netdev = alloc_netdev(sizeof(struct lowpan_dev), IFACE_NAME_TEMPLATE,
-			      NET_NAME_UNKNOWN, netdev_setup);
+			      netdev_setup);
 	if (!netdev)
 		return -ENOMEM;
 
