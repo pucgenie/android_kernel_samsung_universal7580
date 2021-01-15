@@ -277,8 +277,8 @@ static void sec_jack_set_type(struct sec_jack_info *hi,
 				hi->dev_id,
 				&sec_jack_input_data,
 				sizeof(sec_jack_input_data));
-			mod_timer(&hi->timer,
-				jiffies + msecs_to_jiffies(1000));
+		mod_timer(&hi->timer,
+			  jiffies + msecs_to_jiffies(1000));
 	} else {
 		/* for all other jacks, disable send/end key detection */
 		if (hi->send_key_dev != NULL) {

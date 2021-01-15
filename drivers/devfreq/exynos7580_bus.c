@@ -2109,7 +2109,7 @@ static int exynos7_devfreq_mif_set_freq(struct devfreq_data_mif *data,
 	exynos7_devfreq_mif_set_control(data, true);
 
 	/* Find the proper voltage to be set */
-	if ((pll_safe_idx < old_idx) && (pll_safe_idx < target_idx)) {
+	if ((pll_safe_idx < old_idx) && (pll_safe_idx <= target_idx)) {
 		safe_voltage = devfreq_mif_opp_list[pll_safe_idx].volt;
 #ifdef CONFIG_EXYNOS_THERMAL
 		safe_voltage = get_limit_voltage(safe_voltage, data->volt_offset);
