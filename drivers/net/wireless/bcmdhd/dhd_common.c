@@ -101,20 +101,7 @@ extern int dhd_get_concurrent_capabilites(dhd_pub_t *dhd);
 bool ap_cfg_running = FALSE;
 bool ap_fw_loaded = FALSE;
 
-/* Version string to report */
-#ifdef DHD_DEBUG
-#ifndef SRCBASE
-#define SRCBASE        "drivers/net/wireless/bcmdhd"
-#endif
-#define DHD_COMPILED "\nCompiled in " SRCBASE
-#endif /* DHD_DEBUG */
-
-#if defined(DHD_DEBUG)
-const char dhd_version[] = "Dongle Host Driver, version " EPI_VERSION_STR
-	DHD_COMPILED " on " __DATE__ " at " __TIME__;
-#else
-const char dhd_version[] = "\nDongle Host Driver, version " EPI_VERSION_STR "\nCompiled from ";
-#endif 
+const char dhd_version[] = "Dongle Host Driver, version " EPI_VERSION_STR;
 #ifdef DHD_LOG_DUMP
 char fw_version[FW_VER_STR_LEN] = "\0";
 #endif /* DHD_LOG_DUMP */

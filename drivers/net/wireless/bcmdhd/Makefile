@@ -633,15 +633,12 @@ DHDCFLAGS += -DSDIO_PADDING_FOR_BLK_TRANS
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7870),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
-DHDCFLAGS += -Wno-date-time
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7420),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
-DHDCFLAGS += -Wno-date-time
 endif
 ifneq ($(CONFIG_ARCH_MDM9607),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
-DHDCFLAGS += -Wno-date-time
 endif
 endif
 
@@ -657,7 +654,6 @@ DHDCFLAGS += -include "dhd_sec_feature.h"
 #EXTRA_LDFLAGS += --strip-debug
 
 EXTRA_CFLAGS += $(DHDCFLAGS) -DDHD_DEBUG
-EXTRA_CFLAGS += -DSRCBASE=\"$(src)\"
 EXTRA_CFLAGS += -I$(src)/include/ -I$(src)/
 KBUILD_CFLAGS += -I$(LINUXDIR)/include -I$(shell pwd)
 
