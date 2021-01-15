@@ -75,11 +75,6 @@ static unsigned long lowmem_deathpending_timeout;
 			pr_info(x);			\
 	} while (0)
 
-#if defined(CONFIG_ZSWAP)
-extern u64 zswap_pool_pages;
-extern atomic_t zswap_stored_pages;
-#endif
-
 static DEFINE_MUTEX(scan_mutex);
 
 int can_use_cma_pages(gfp_t gfp_mask)
@@ -244,14 +239,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 						global_page_state(NR_SHMEM);
 	reclaim_state = current->reclaim_state;
 
-#ifdef CONFIG_ZSWAP
-	/* to prevent other_file underflow and then be negative */
-	if (other_file > total_swapcache_pages())
-		other_file -= total_swapcache_pages();
-	else
-		other_file = 0;
-#endif
-
 	tune_lmk_param(&other_free, &other_file, sc);
 
 	if (lowmem_adj_size < array_size)
@@ -308,14 +295,6 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 			continue;
 		}
 		tasksize = get_mm_rss(p->mm);
-#if defined(CONFIG_ZSWAP)
-		if (atomic_read(&zswap_stored_pages)) {
-			lowmem_print(3, "shown tasksize : %d\n", tasksize);
-			tasksize += (int)zswap_pool_pages * get_mm_counter(p->mm, MM_SWAPENTS)
-				/ atomic_read(&zswap_stored_pages);
-			lowmem_print(3, "real tasksize : %d\n", tasksize);
-		}
-#endif
 
 		task_unlock(p);
 		if (tasksize <= 0)
