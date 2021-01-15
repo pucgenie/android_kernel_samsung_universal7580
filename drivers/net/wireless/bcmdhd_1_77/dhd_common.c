@@ -188,22 +188,9 @@ static int dngl_host_event(dhd_pub_t *dhdp, void *pktdata, bcm_dngl_event_msg_t 
 bool ap_cfg_running = FALSE;
 bool ap_fw_loaded = FALSE;
 
-/* Version string to report */
-#ifdef DHD_DEBUG
-#ifndef SRCBASE
-#define SRCBASE        "drivers/net/wireless/bcmdhd"
-#endif
-#define DHD_COMPILED "\nCompiled in " SRCBASE
-#endif /* DHD_DEBUG */
-
 #define CHIPID_MISMATCH	8
 
-#if defined(DHD_DEBUG)
-const char dhd_version[] = "Dongle Host Driver, version " EPI_VERSION_STR
-	DHD_COMPILED " on " __DATE__ " at " __TIME__;
-#else
-const char dhd_version[] = "\nDongle Host Driver, version " EPI_VERSION_STR "\nCompiled from ";
-#endif 
+const char dhd_version[] = "Dongle Host Driver, version " EPI_VERSION_STR;
 char fw_version[FW_VER_STR_LEN] = "\0";
 char clm_version[CLM_VER_STR_LEN] = "\0";
 

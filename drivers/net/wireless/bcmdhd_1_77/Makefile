@@ -1153,23 +1153,6 @@ ifeq ($(GGSM_WIFI_5GHz_CHANNELS),true)
   DHDCFLAGS += -DCUSTOMER_SET_COUNTRY
 endif
 
-# Compiler option for specific platform
-ifeq ($(CONFIG_SOC_EXYNOS7570),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_SOC_EXYNOS8890),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_SOC_EXYNOS8895),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_ARCH_MSM8996),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_ARCH_MSM8998),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-
 # DTS Support
 ifeq ($(CONFIG_OF),y)
 ifneq ($(CONFIG_MACH_UNIVERSAL5433),)
@@ -1222,11 +1205,9 @@ DHDCFLAGS += -DDHD_OF_SUPPORT
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7870),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
-DHDCFLAGS += -Wno-date-time
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7885),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
-DHDCFLAGS += -Wno-date-time
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7570),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
@@ -1268,7 +1249,6 @@ DHDCFLAGS += -include "dhd_sec_feature.h"
 #EXTRA_LDFLAGS += --strip-debug
 
 EXTRA_CFLAGS += $(DHDCFLAGS) -DDHD_DEBUG
-EXTRA_CFLAGS += -DSRCBASE=\"$(src)\"
 EXTRA_CFLAGS += -I$(src)/include/ -I$(src)/
 EXTRA_CFLAGS += $(call cc-option, -Wunused-but-set-variable)
 EXTRA_CFLAGS += $(call cc-option, -Wmaybe-uninitialized)
