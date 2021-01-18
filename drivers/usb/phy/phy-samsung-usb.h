@@ -412,7 +412,7 @@ struct samsung_usbphy {
 
 #define phy_to_sphy(x)		container_of((x), struct samsung_usbphy, phy)
 
-static const struct of_device_id samsung_usbphy_dt_match[];
+static const struct of_device_id samsung_usbphy_dt_match[2];
 
 static inline const struct samsung_usbphy_drvdata
 *samsung_usbphy_get_driver_data(struct platform_device *pdev)
