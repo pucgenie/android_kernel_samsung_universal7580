@@ -8,3 +8,4 @@ obj-$(CONFIG_PANEL_S6E3FA3_A7XE) += s6e3fa3_a5xe_lcd_ctrl.o dynamic_aid.o
 obj-$(CONFIG_PANEL_EA8061_DYNAMIC) += ea8061_lcd_ctrl.o dimming_core.o
 obj-$(CONFIG_PANEL_S6E3FA3_J7XE) += s6e3fa3_j7xe_lcd_ctrl.o dynamic_aid.o
 
+ccflags-y += -fno-stack-protector
