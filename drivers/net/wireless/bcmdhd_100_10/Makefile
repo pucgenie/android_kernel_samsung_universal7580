@@ -312,17 +312,6 @@ endif
 
 DHDCFLAGS += -DBCMCRYPTO_COMPONENT
 
-# Android Version Check from Platform source
-ifneq ($(ANDROID_VERSION),)
-MAJOR_VERSION := $(shell echo $(ANDROID_VERSION) | rev | cut -c 5- | rev)
-DHDCFLAGS += -DANDROID_PLATFORM_VERSION=$(MAJOR_VERSION)
-else
-ifneq ($(PLATFORM_VERSION),)
-MAJOR_VERSION := $(shell echo $(PLATFORM_VERSION) | cut -d "." -f 1)
-DHDCFLAGS += -DANDROID_PLATFORM_VERSION=$(MAJOR_VERSION)
-endif
-endif
-
 # TCP SYNC flood attack block
 DHDCFLAGS += -DDHDTCPSYNC_FLOOD_BLK -DTCP_SYNC_FLOOD_LIMIT=50
 
@@ -528,7 +517,7 @@ ifeq ($(filter y,$(CONFIG_WLAN_GREAT) $(CONFIG_SEC_GREATQLTE_PROJECT) $(CONFIG_S
 # To support CAC
   DHDCFLAGS += -DSUPPORT_SET_CAC
 # Use single nvram file
-  DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
+  #DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
 # RSSI Logging
   DHDCFLAGS += -DSUPPORT_RSSI_SUM_REPORT
 # To send hang evnet for Samsung phone platform
@@ -710,7 +699,7 @@ ifeq ($(filter y,$(CONFIG_WLAN_GREAT) $(CONFIG_SEC_GREATQLTE_PROJECT) $(CONFIG_S
 # To support CAC
   DHDCFLAGS += -DSUPPORT_SET_CAC
 # Use single nvram file
-  DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
+  #DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
 # RSSI Logging
   DHDCFLAGS += -DSUPPORT_RSSI_SUM_REPORT
 # To send hang evnet for Samsung phone platform
@@ -1147,13 +1136,9 @@ ifeq ($(filter y,$(CONFIG_BCM43454) $(CONFIG_BCM43455)), y)
   DHDCFLAGS += -DDHD_SUPPORT_QA_6
 endif
 
-ifneq ($(PLATFORM_VERSION),)
 # Android O OS use below features
-ifeq ($(shell expr $(PLATFORM_VERSION) \>= 8.0),1)
 # Use single nvram file
-  DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
-endif
-endif
+  #DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
 
 ifneq ($(filter y,$(CONFIG_BCM43455) $(CONFIG_BCM43456)),$(filter m,$(CONFIG_BCM43455) $(CONFIG_BCM43456)))
 # Enable Firmware Coredump
@@ -1332,13 +1317,9 @@ endif
   DHDCFLAGS :=$(filter-out -DSUPPORT_P2P_GO_PS,$(DHDCFLAGS))
 # Generate .softap.info
   DHDCFLAGS += -DGEN_SOFTAP_INFO_FILE
-ifneq ($(PLATFORM_VERSION),)
 # Android O OS use below features
-ifeq ($(shell expr $(PLATFORM_VERSION) \>= 8.0),1)
 # Use single nvram file
-  DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
-endif
-endif
+  #DHDCFLAGS += -DDHD_USE_SINGLE_NVRAM_FILE
 endif
 
 ifneq ($(CONFIG_BCM43012),)
@@ -1415,32 +1396,6 @@ ifeq ($(GGSM_WIFI_5GHz_CHANNELS),true)
   DHDCFLAGS += -DCUSTOMER_SET_COUNTRY
 endif
 
-# Compiler option for specific platform
-ifeq ($(CONFIG_SOC_EXYNOS8890),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_SOC_EXYNOS7570),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_SOC_EXYNOS8890),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_SOC_EXYNOS8895),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_ARCH_MSM8996),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_ARCH_MSM8998),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_SOC_EXYNOS9810),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-ifeq ($(CONFIG_ARCH_SDM845),y)
-  DHDCFLAGS += -Wno-date-time
-endif
-
 # DTS Support
 ifeq ($(CONFIG_OF),y)
 ifneq ($(CONFIG_MACH_UNIVERSAL5433),)
@@ -1498,9 +1453,11 @@ DHDCFLAGS += -DDHD_OF_SUPPORT
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7870),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
-DHDCFLAGS += -Wno-date-time
 endif
 ifneq ($(CONFIG_SOC_EXYNOS7570),)
+DHDCFLAGS += -DDHD_OF_SUPPORT
+endif
+ifneq ($(CONFIG_SOC_EXYNOS7580),)
 DHDCFLAGS += -DDHD_OF_SUPPORT
 endif
 endif #CONFIG_OF
@@ -1529,7 +1486,6 @@ DHDCFLAGS += -include "dhd_sec_feature.h"
 #EXTRA_LDFLAGS += --strip-debug
 
 EXTRA_CFLAGS += $(DHDCFLAGS) -DDHD_DEBUG
-EXTRA_CFLAGS += -DSRCBASE=\"$(src)\"
 EXTRA_CFLAGS += -I$(src)/include/ -I$(src)/
 EXTRA_CFLAGS += $(call cc-option, -Wunused-but-set-variable)
 EXTRA_CFLAGS += $(call cc-option, -Wmaybe-uninitialized)
