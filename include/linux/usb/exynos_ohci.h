@@ -32,7 +32,7 @@ struct exynos_ohci_hcd {
 	unsigned post_lpa_resume:1;
 };
 
-static const struct of_device_id exynos_ohci_match[];
+static const struct of_device_id exynos_ohci_match[5];
 
 static inline const struct exynos_ohci_drvdata
 *exynos_ohci_get_driver_data(struct platform_device *pdev)
