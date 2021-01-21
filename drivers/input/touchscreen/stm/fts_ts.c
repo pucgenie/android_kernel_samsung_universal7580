@@ -417,7 +417,7 @@ static int fts_set_noise_param(struct fts_ts_info *info)
 #endif				// FTS_SUPPORT_NOISE_PARAM
 
 /* Added for samsung dependent codes such as Factory test,
- * Touch booster, Related debug sysfs.
+ * Related debug sysfs.
  */
 #include "fts_sec.c"
 
@@ -521,9 +521,6 @@ static unsigned char fts_event_handler_type_b(struct fts_ts_info *info,
 	unsigned char LastLeftEvent = 0;
 	int x = 0, y = 0, z = 0;
 	int bw = 0, bh = 0, angle = 0, palm = 0;
-#if defined (CONFIG_INPUT_BOOSTER)
-	bool booster_restart = false;
-#endif
 
 	for (EventNum = 0; EventNum < LeftEvent; EventNum++) {
 
@@ -597,9 +594,6 @@ static unsigned char fts_event_handler_type_b(struct fts_ts_info *info,
 
 		case EVENTID_ENTER_POINTER:
 			info->touch_count++;
-#if defined (CONFIG_INPUT_BOOSTER)
-			booster_restart = true;
-#endif
 		case EVENTID_MOTION_POINTER:
 			x = data[1 + EventNum * FTS_EVENT_SIZE] +
 			    ((data[2 + EventNum * FTS_EVENT_SIZE] &
@@ -742,16 +736,6 @@ static unsigned char fts_event_handler_type_b(struct fts_ts_info *info,
 	}
 
 	input_sync(info->input_dev);
-
-#if defined (CONFIG_INPUT_BOOSTER)
-	if ((EventID == EVENTID_ENTER_POINTER)
-			|| (EventID == EVENTID_LEAVE_POINTER)) {
-		if (booster_restart)
-			input_booster_send_event(BOOSTER_DEVICE_TOUCH, BOOSTER_MODE_ON);
-		if (!info->touch_count)
-			input_booster_send_event(BOOSTER_DEVICE_TOUCH, BOOSTER_MODE_OFF);
-	}
-#endif
 
 	return LastLeftEvent;
 }
@@ -1557,11 +1541,6 @@ void fts_release_all_finger(struct fts_ts_info *info)
 	input_report_switch(info->input_dev, SW_GLOVE, false);
 	info->touch_mode = FTS_TM_NORMAL;
 #endif
-
-#ifdef CONFIG_INPUT_BOOSTER
-	input_booster_send_event(BOOSTER_DEVICE_TOUCH, BOOSTER_MODE_FORCE_OFF);
-#endif
-
 	input_sync(info->input_dev);
 }
 

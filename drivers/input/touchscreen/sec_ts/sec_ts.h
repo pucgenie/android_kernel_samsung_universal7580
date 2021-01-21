@@ -16,9 +16,6 @@
 #ifdef CONFIG_SEC_DEBUG_TSP_LOG
 #include <linux/sec_debug.h>
 #endif
-#ifdef CONFIG_INPUT_BOOSTER
-#include <linux/input/input_booster.h>
-#endif
 
 #define SEC_TS_I2C_NAME "sec_ts"
 #define SEC_TS_DEVICE_NAME "SEC_TS"

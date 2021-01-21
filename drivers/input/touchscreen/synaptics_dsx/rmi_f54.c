@@ -491,9 +491,6 @@ static void glove_mode(void *dev_data);
 static void clear_cover_mode(void *dev_data);
 static void fast_glove_mode(void *dev_data);
 #endif
-#ifdef TSP_BOOSTER
-static void boost_level(void *dev_data);
-#endif
 #ifdef SIDE_TOUCH
 static void sidekey_enable(void *dev_data);
 static void set_sidekey_only_enable(void *dev_data);
@@ -547,9 +544,6 @@ static struct ft_cmd ft_cmds[] = {
 	{FT_CMD("clear_cover_mode", clear_cover_mode),},
 	{FT_CMD("fast_glove_mode", fast_glove_mode),},
 	{FT_CMD("get_glove_sensitivity", not_support_cmd),},
-#endif
-#ifdef TSP_BOOSTER
-	{FT_CMD("boost_level", boost_level),},
 #endif
 #ifdef SIDE_TOUCH
 	{FT_CMD("sidekey_enable", sidekey_enable),},
@@ -3166,39 +3160,6 @@ static void clear_cover_mode(void *dev_data)
 		if (rmi4_data->fast_glove_state)
 			rmi4_data->f12.feature_enable |= GLOVE_DETECTION_EN;
 	}
-
-out:
-	set_cmd_result(data, data->cmd_buff, strlen(data->cmd_buff));
-
-	mutex_lock(&data->cmd_lock);
-	data->cmd_is_running = false;
-	mutex_unlock(&data->cmd_lock);
-
-	data->cmd_state = CMD_STATUS_WAITING;
-}
-#endif
-
-#ifdef TSP_BOOSTER
-static void boost_level(void *dev_data)
-{
-	struct synaptics_rmi4_data *rmi4_data = (struct synaptics_rmi4_data *)dev_data;
-	struct factory_data *data = rmi4_data->f54->factory_data;
-
-
-	set_default_result(data);
-
-	if (data->cmd_param[0] < 0 || data->cmd_param[0] >= BOOSTER_LEVEL_MAX) {
-		snprintf(data->cmd_buff, sizeof(data->cmd_buff), "NG");
-		data->cmd_state = CMD_STATUS_FAIL;
-		goto out;
-	}
-
-	change_booster_level_for_tsp(data->cmd_param[0]);
-	tsp_debug_dbg(false, &rmi4_data->i2c_client->dev, "%s %d\n",
-					__func__, data->cmd_param[0]);
-
-	snprintf(data->cmd_buff, sizeof(data->cmd_buff), "OK");
-	data->cmd_state = CMD_STATUS_OK;
 
 out:
 	set_cmd_result(data, data->cmd_buff, strlen(data->cmd_buff));

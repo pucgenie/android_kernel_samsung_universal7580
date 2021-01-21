@@ -31,9 +31,6 @@
 #ifdef CONFIG_SEC_DEBUG_TSP_LOG
 #include <linux/sec_debug.h>
 #endif
-#ifdef CONFIG_INPUT_BOOSTER
-#include <linux/input/input_booster.h>
-#endif
 
 /**************************************/
 /* Define related with driver feature */
@@ -43,9 +40,6 @@
 #define USE_CUSTOM_REZERO
 #define DEBUG_HOVER
 #define USE_SHUTDOWN_CB
-#ifdef CONFIG_INPUT_BOOSTER
-#define TSP_BOOSTER
-#endif
 #if defined(CONFIG_GLOVE_TOUCH)
 #define GLOVE_MODE
 #endif
