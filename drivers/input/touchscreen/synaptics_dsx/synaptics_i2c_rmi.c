@@ -642,9 +642,6 @@ static void synaptics_rmi4_release_all_finger(struct synaptics_rmi4_data *rmi4_d
 			SW_GLOVE, false);
 	rmi4_data->touchkey_glove_mode_status = false;
 #endif
-#ifdef TSP_BOOSTER
-	input_booster_send_event(BOOSTER_DEVICE_TOUCH, BOOSTER_MODE_FORCE_OFF);
-#endif
 	input_sync(rmi4_data->input_dev);
 
 	rmi4_data->fingers_on_2d = false;
@@ -1033,12 +1030,6 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 
 	input_sync(rmi4_data->input_dev);
 
-#ifdef TSP_BOOSTER
-	if (new_finger_pressed)
-		input_booster_send_event(BOOSTER_DEVICE_TOUCH, BOOSTER_MODE_ON);
-	if (!touch_count)
-		input_booster_send_event(BOOSTER_DEVICE_TOUCH, BOOSTER_MODE_OFF);
-#endif
 	return touch_count;
 }
 
