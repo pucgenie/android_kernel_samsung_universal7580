@@ -2497,25 +2497,29 @@ static void cod3022x_jack_det_work(struct work_struct *work)
 #define BUTTON_PRESS 1
 #define BUTTON_RELEASE 0
 
-static int get_adc_avg(int* adc_values)
+static int get_adc_avg(int *adc_values)
 {
 	int i;
-	int adc_sum=0;
-	for ( i=0; i<ADC_TRACE_NUM; i++) {
+	int adc_sum = 0;
+
+	for (i = 0; i < ADC_TRACE_NUM; i++)
 		adc_sum += adc_values[i];
-	}
+
 	adc_sum = adc_sum / ADC_TRACE_NUM;
+
 	return adc_sum;
 }
 
-static int get_adc_devi(int avg , int* adc_values)
+static int get_adc_devi(int avg, int *adc_values)
 {
 	int i;
-	int devi=0, diff;
-	for ( i=0; i<ADC_TRACE_NUM; i++) {
-		diff = adc_values[i]-avg;
-		devi += (diff*diff);
+	int devi = 0, diff;
+
+	for (i = 0; i < ADC_TRACE_NUM; i++) {
+		diff = adc_values[i] - avg;
+		devi += (diff * diff);
 	}
+
 	return devi;
 }
 
@@ -2539,14 +2543,15 @@ static void cod3022x_buttons_work(struct work_struct *work)
 		dev_err(cod3022x->dev, "Skip button events for jack_out\n");
 		return;
 	}
+
 	if (!jd->mic_det) {
 		dev_err(cod3022x->dev, "Skip button events for 3-pole jack\n");
 		return;
 	}
 
-	for ( j=0; j<ADC_TRACE_NUM2; j++) {
+	for (j = 0; j < ADC_TRACE_NUM2; j++) {
 		/* read GPADC for button */
-		for ( i=0; i<ADC_TRACE_NUM; i++) {
+		for (i = 0; i < ADC_TRACE_NUM; i++) {
 			adc = cod3022x_adc_get_value(cod3022x);
 			adc_values[i] = adc;
 			udelay(ADC_READ_DELAY_US);
@@ -2558,14 +2563,15 @@ static void cod3022x_buttons_work(struct work_struct *work)
 		 */
 		avg = get_adc_avg(adc_values);
 		devi = get_adc_devi(avg,adc_values);
-		dev_dbg(cod3022x->dev, ":button adc avg: %d, devi: %d\n",avg, devi);
+		dev_dbg(cod3022x->dev, "button adc avg: %d, devi: %d\n", avg, devi);
 
-		if (devi > ADC_DEVI_THRESHOLD ) {
+		if (devi > ADC_DEVI_THRESHOLD) {
 			queue_delayed_work(cod3022x->buttons_wq,
-					&cod3022x->buttons_work, 5);
-			for ( i=0; i<ADC_TRACE_NUM; ){
-				dev_dbg(cod3022x->dev, ":retry button_work :  %d %d %d %d %d\n",
-				adc_values[i+ 0], adc_values[i+ 1], adc_values[i+ 2], adc_values[i+ 3], adc_values[i+ 4]);
+					   &cod3022x->buttons_work, 5);
+			for (i = 0; i < ADC_TRACE_NUM; ) {
+				dev_dbg(cod3022x->dev, "retry button_work: %d %d %d %d %d\n",
+					adc_values[i+ 0], adc_values[i+ 1], adc_values[i+ 2],
+					adc_values[i+ 3], adc_values[i+ 4]);
 				i += 5;
 			}
 			return;
@@ -2574,17 +2580,19 @@ static void cod3022x_buttons_work(struct work_struct *work)
 
 		if (avg > adc_max)
 			adc_max = avg;
+
 		mdelay(ADC_READ_DELAY_MS);
 	}
 	adc_final = adc_max;
 
 	/* check button press/release */
-	if(adc_final > cod3022x->btn_release_value)
+	if (adc_final > cod3022x->btn_release_value)
 		current_button_state = BUTTON_RELEASE;
 	else
 		current_button_state = BUTTON_PRESS;
 
-	if( jd->privious_button_state == current_button_state) {
+	if (jd->privious_button_state == current_button_state) {
+		dev_err(cod3022x->dev, "Button state did not change\n");
 		return;
 	}
 
@@ -2592,8 +2600,9 @@ static void cod3022x_buttons_work(struct work_struct *work)
 
 	adc = adc_final;
 	jd->adc_val = adc_final;
+
 	/* determine which button press or release */
-	if(current_button_state == BUTTON_PRESS) {
+	if (current_button_state == BUTTON_PRESS) {
 		for (i = 0; i < num_buttons_zones; i++)
 			if (adc >= btn_zones[i].adc_low &&
 				adc <= btn_zones[i].adc_high) {
@@ -2602,18 +2611,18 @@ static void cod3022x_buttons_work(struct work_struct *work)
 				input_sync(cod3022x->input);
 				jd->button_det = true;
 				cod3022x_process_button_ev(jd->button_code, 1);
-				dev_dbg(cod3022x->dev, ":key %d is pressed, adc %d\n",
+				dev_dbg(cod3022x->dev, "key %d is pressed, adc %d\n",
 						 btn_zones[i].code, adc);
 				return;
 		}
 
-		dev_err(cod3022x->dev, ":key skipped. ADC %d\n", adc);
+		dev_err(cod3022x->dev, "key skipped. ADC %d\n", adc);
 	} else {
 		jd->button_det = false;
 		input_report_key(cod3022x->input, jd->button_code, 0);
 		input_sync(cod3022x->input);
 		cod3022x_process_button_ev(jd->button_code, 0);
-		dev_dbg(cod3022x->dev, ":key %d released\n", jd->button_code);
+		dev_dbg(cod3022x->dev, "key %d released\n", jd->button_code);
 	}
 
 	return;
@@ -3130,7 +3139,7 @@ static void cod3022x_reg_restore(struct snd_soc_codec *codec)
 	snd_soc_update_bits(codec, COD3022X_81_DET_ON,
 			EN_PDB_JD_CLK_MASK, EN_PDB_JD_CLK_MASK);
 
-	/* Give 15ms delay before accessing the otp values */
+	/* Give 15ms delay before storing the otp values */
 	usleep_range(15000, 15000 + 1000);
 
 	/*
@@ -3479,7 +3488,6 @@ static void cod3022x_cfg_gpio(struct device *dev, const char *name)
 	return;
 err:
 	dev_err(dev, "Unable to configure codec gpio as %s\n", name);
-	return;
 }
 
 static int cod3022x_enable(struct device *dev)
@@ -3497,13 +3505,15 @@ static int cod3022x_enable(struct device *dev)
 	 * issue
 	 */
 	cod3022x->is_suspend = false;
+
+	/* Disable cache_only feature and sync the cache with h/w */
 	regcache_cache_only(cod3022x->regmap, false);
 	cod3022x_reg_restore(cod3022x->codec);
 
 	return 0;
 }
 
-static int cod3022x_disble(struct device *dev)
+static int cod3022x_disable(struct device *dev)
 {
 	struct cod3022x_priv *cod3022x = dev_get_drvdata(dev);
 
@@ -3515,7 +3525,10 @@ static int cod3022x_disble(struct device *dev)
 	 * issue
 	 */
 	cod3022x->is_suspend = true;
+
+	/* As device is going to suspend-state, limit the writes to cache */
 	regcache_cache_only(cod3022x->regmap, true);
+
 	cod3022x_regulators_disable(cod3022x->codec);
 	cod3022x_cfg_gpio(dev, "idle");
 
@@ -3532,7 +3545,7 @@ static int cod3022x_sys_suspend(struct device *dev)
 		return 0;
 	}
 	dev_dbg(dev, "(*) %s\n", __func__);
-	cod3022x_disble(dev);
+	cod3022x_disable(dev);
 #endif
 
 	return 0;
@@ -3569,7 +3582,7 @@ static int cod3022x_runtime_suspend(struct device *dev)
 {
 	dev_dbg(dev, "(*) %s\n", __func__);
 
-	cod3022x_disble(dev);
+	cod3022x_disable(dev);
 	s2801x_put_sync();
 
 	return 0;
