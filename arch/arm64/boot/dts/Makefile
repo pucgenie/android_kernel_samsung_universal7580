@@ -18,6 +18,9 @@ dtb-$(CONFIG_MACH_GVLTE) += exynos7580-gvlte_rev00.dtb exynos7580-gvlte_rev01.dt
 dtb-$(CONFIG_MACH_GVWIFI) += exynos7580-gvwifi_rev09.dtb exynos7580-gvwifi_rev10.dtb
 
 dtb-$(CONFIG_MACH_UNIVERSAL5433) += exynos5433-universal5433_rev02.dtb exynos5433-universal5433.dtb
+
+DTC_FLAGS += -Wno-unit_address_vs_reg -Wno-unit_address_format
+
 targets += dtbs
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES))
