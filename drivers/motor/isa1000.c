@@ -111,9 +111,9 @@ static void isa1000_en(struct isa1000_ddata *ddata, bool en)
 		ret = regulator_disable(ddata->pdata->regulator);
 
 	if (ret < 0)
-		pr_err("failed to regulator %sable", en ? "en" : "dis");
+		pr_err("failed to %sable regulator", en ? "en" : "dis");
 #endif
-	pr_info("%s\n", en ? "on" : "off");
+	pr_debug("%s\n", en ? "on" : "off");
 
 	if (ddata->pdata->gpio_en)
 		gpio_direction_output(ddata->pdata->gpio_en, en);
@@ -135,7 +135,7 @@ static void isa1000_enable(struct timed_output_dev *dev, int value)
 	ddata->timeout = value;
 	if (value > 0 ) {
 		if (!ddata->running) {
-			pr_info("%u %ums\n", ddata->duty, ddata->timeout);
+			pr_debug("%u %ums\n", ddata->duty, ddata->timeout);
 			ddata->running = true;
 			isa1000_pwm_config(ddata, ddata->duty);
 			isa1000_pwm_en(ddata, true);
