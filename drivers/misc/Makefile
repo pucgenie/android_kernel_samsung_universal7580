@@ -73,7 +73,4 @@ obj-$(CONFIG_SENSORS_BHI)	+= bhy/
 # Samsung Jack Support
 obj-$(CONFIG_SAMSUNG_JACK)	+= sec_jack.o
 
-# for DMVerity
-obj-$(CONFIG_DM_VERITY)		+= dmverity_query.o
-
 obj-$(CONFIG_UID_SYS_STATS) += uid_sys_stats.o
