@@ -2055,8 +2055,6 @@ static const struct iio_buffer_setup_ops inv_mpu_ring_setup_ops = {
 
 int inv_mpu_configure_ring(struct iio_dev *indio_dev)
 {
-	int ret;
-	struct inv_mpu_state *st = iio_priv(indio_dev);
 	struct iio_buffer *ring;
 
 	ring = iio_kfifo_allocate(indio_dev);
@@ -2066,16 +2064,29 @@ int inv_mpu_configure_ring(struct iio_dev *indio_dev)
 	/* setup ring buffer */
 	ring->scan_timestamp = true;
 	indio_dev->setup_ops = &inv_mpu_ring_setup_ops;
+
+	return 0;
+}
+
+int inv_mpu_configure_ring2(struct iio_dev *indio_dev)
+{
+	int ret;
+	struct inv_mpu_state *st = iio_priv(indio_dev);
+
 	/*scan count double count timestamp. should subtract 1. but
 	number of channels still includes timestamp*/
 	if (INV_MPU3050 == st->chip_type)
 		ret = request_threaded_irq(st->client->irq, inv_irq_handler,
 			inv_read_fifo_mpu3050,
 			IRQF_TRIGGER_RISING | IRQF_SHARED, "inv_irq", st);
-	else
+	else {
 		ret = request_threaded_irq(st->client->irq, inv_irq_handler,
 			inv_read_fifo,
 			IRQF_TRIGGER_RISING | IRQF_SHARED, "inv_irq", st);
+
+		disable_irq(st->client->irq);
+	}
+
 	if (ret)
 		goto error_iio_sw_rb_free;
 

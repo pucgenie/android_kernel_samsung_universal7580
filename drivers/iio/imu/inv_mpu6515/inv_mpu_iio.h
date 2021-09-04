@@ -1164,6 +1164,7 @@ ssize_t inv_six_q_write(struct file *fp, struct kobject *kobj,
 	struct bin_attribute *attr, char *buf, loff_t pos, size_t size);
 
 int inv_mpu_configure_ring(struct iio_dev *indio_dev);
+int inv_mpu_configure_ring2(struct iio_dev *indio_dev);
 int inv_mpu_probe_trigger(struct iio_dev *indio_dev);
 void inv_mpu_unconfigure_ring(struct iio_dev *indio_dev);
 void inv_mpu_remove_trigger(struct iio_dev *indio_dev);
