@@ -17,6 +17,7 @@ ifeq ($(VERSION),3)
 ifeq ($(PATCHLEVEL),10)
 #$(info "KERNELVERSION=3.10")
 #--yd ifeq ($(CONFIG_INV_KERNEL_3_10), y)
+
 CFLAGS_inv_mpu_core.o      += -Idrivers/iio    -Iinclude/linux/iio  -DINV_KERNEL_3_10
 CFLAGS_inv_mpu_ring.o      += -Idrivers/iio    -Iinclude/linux/iio  -DINV_KERNEL_3_10
 CFLAGS_inv_mpu_trigger.o   += -Idrivers/iio    -Iinclude/linux/iio  -DINV_KERNEL_3_10

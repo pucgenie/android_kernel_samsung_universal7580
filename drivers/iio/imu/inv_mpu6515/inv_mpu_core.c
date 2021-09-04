@@ -30,7 +30,6 @@
 #include <linux/of_gpio.h>
 #include <linux/alarmtimer.h>
 
-#include "../../android_alarm.h"
 #include "inv_mpu_iio.h"
 #ifdef INV_KERNEL_3_10
 #include <linux/iio/sysfs.h>
@@ -67,34 +66,14 @@ static __s8 orientation_map[8][9] = {
 	{ 0, -1,  0, -1, 0,  0, 0,  0, -1},
 };
 
-#if 0
 s64 get_time_ns(void)
 {
 	struct timespec ts;
-	ktime_t current_time;
-	/* TODO:
-	 * Use the same API as what Android elapsedRealtimeNanos() is using
-	 * for good timestamp synchronization with applications.
-	 * This is system dependent and more information might be found
-	 * in following files.
-	 *
-	 * <kernel root>/drivers/staging/android/alarm-dev.c
-	 * <kernel root>/drivers/rtc/alarm-dev.c
-	 */
-	current_time = alarm_get_elapsed_realtime();
-	ts = ktime_to_timespec(current_time);
+
+	get_monotonic_boottime(&ts);
 
 	return timespec_to_ns(&ts);
 }
-#else
-s64 get_time_ns(void)
-{
-	struct timespec ts;
-	ts = ktime_to_timespec(ktime_get_boottime());
-
-	return timespec_to_ns(&ts);
-}
-#endif
 
 s64 get_time_timeofday(void)
 {
@@ -2055,8 +2034,6 @@ static ssize_t inv_flush_batch_show(struct device *dev,
 	result = inv_flush_batch_data(indio_dev, &has_data);
 	mutex_unlock(&indio_dev->mlock);
 
-	pr_info("[SENSOR] %s, has_data=%d, result=%d\n", __func__, has_data, result);
-
 	if (result)
 		return sprintf(buf, "%d\n", result);
 	else
@@ -2728,19 +2705,19 @@ static IIO_DEVICE_ATTR(pedometer_time, S_IRUGO | S_IWUSR, inv_attr64_show,
 static IIO_DEVICE_ATTR(pedometer_counter, S_IRUGO | S_IWUSR, inv_attr64_show,
 	NULL, ATTR_DMP_PEDOMETER_COUNTER);
 
-static IIO_DEVICE_ATTR(shealth_cadence, S_IRUGO | S_IWUGO, inv_attr_show,
+static IIO_DEVICE_ATTR(shealth_cadence, 0660, inv_attr_show,
 	NULL, ATTR_DMP_SHEALTH_CADENCE);
-static IIO_DEVICE_ATTR(shealth_cadence_enable, S_IRUGO | S_IWUGO, inv_attr_show,
+static IIO_DEVICE_ATTR(shealth_cadence_enable, 0660, inv_attr_show,
 	inv_dmp_shealth_store, ATTR_DMP_SHEALTH_ENABLE);
-static IIO_DEVICE_ATTR(shealth_int_period, S_IRUGO | S_IWUGO, inv_attr_show,
+static IIO_DEVICE_ATTR(shealth_int_period, 0660, inv_attr_show,
 	inv_dmp_shealth_store, ATTR_DMP_SHEALTH_INTERRUPT_PERIOD);
-static IIO_DEVICE_ATTR(shealth_instant_cadence, S_IRUGO | S_IWUGO,
+static IIO_DEVICE_ATTR(shealth_instant_cadence, 0660,
 		inv_attr_show, NULL, ATTR_DMP_SHEALTH_INSTANT_CADENCE);
-static IIO_DEVICE_ATTR(shealth_flush_cadence, S_IRUGO | S_IWUGO, inv_attr_show,
+static IIO_DEVICE_ATTR(shealth_flush_cadence, 0660, inv_attr_show,
 	NULL, ATTR_DMP_SHEALTH_FLUSH_CADENCE);
-static IIO_DEVICE_ATTR(shealth_freq_threshold, S_IRUGO | S_IWUGO, inv_attr_show,
+static IIO_DEVICE_ATTR(shealth_freq_threshold, 0660, inv_attr_show,
 	inv_dmp_shealth_store, ATTR_DMP_SHEALTH_FREQ_THRESHOLD);
-static IIO_DEVICE_ATTR(shealth_timer, S_IRUGO | S_IWUGO, inv_attr_show,
+static IIO_DEVICE_ATTR(shealth_timer, 0660, inv_attr_show,
 	inv_dmp_shealth_store, ATTR_DMP_SHEALTH_TIMER);
 
 
@@ -3351,7 +3328,7 @@ static ssize_t inv_reactive_store(struct device *dev,
 	unsigned long enable = 0;
 	int result;
 
-	if (strict_strtoul(buf, 10, &enable)) {
+	if (kstrtoul(buf, 10, &enable)) {
 		pr_err("[SENSOR] %s, kstrtoint fail\n", __func__);
 		return -EINVAL;
 	}
@@ -3449,7 +3426,7 @@ static ssize_t inv_accel_lpf_store(struct device *dev,
 	unsigned long enable = 0;
 	u8 reg = 0;
 
-	if (strict_strtoul(buf, 10, &enable)) {
+	if (kstrtoul(buf, 10, &enable)) {
 		pr_err("[SENSOR] %s, kstrtoint fail\n", __func__);
 		return -EINVAL;
 	}
@@ -4053,7 +4030,7 @@ static int inv_mpu_probe(struct i2c_client *client,
 	 */
 	bool reset_needed = true;
 
-	pr_info("[SENSOR] %s is called!!\n", __func__);
+	pr_info("[MPU6515] %s is called!!\n", __func__);
 #ifdef CONFIG_DTS_INV_MPU_IIO
 	enable_irq_wake(client->irq);
 #endif
@@ -4140,9 +4117,6 @@ mdelay(100);
 		goto out_free;
 	}
 
-	enable_irq(client->irq);
-	enable_irq_wake(client->irq);
-
 	result = iio_buffer_register(indio_dev, indio_dev->channels,
 					indio_dev->num_channels);
 	if (result) {
@@ -4208,6 +4182,15 @@ mdelay(100);
 	}
 #endif
 
+	result = inv_mpu_configure_ring2(indio_dev);
+	if (result) {
+		pr_err("configure ring2 buffer fail\n");
+		goto err_request_threaded_irq;
+	}
+
+	enable_irq(client->irq);
+	enable_irq_wake(client->irq);
+
 	dev_info(&client->dev, "%s is ready to go!\n", indio_dev->name);
 
 	/* version info */
@@ -4215,6 +4198,8 @@ mdelay(100);
 
 	return 0;
 
+err_request_threaded_irq:
+	sensors_unregister(st->accel_sensor_device,accel_sensor_attrs);
 #ifdef CONFIG_SENSORS
 err_accel_sensor_register_failed:
 	sensors_unregister(st->gyro_sensor_device,gyro_sensor_attrs);
@@ -4336,8 +4321,8 @@ static int inv_mpu_resume(struct device *dev)
 	int result;
 
 	/* add code according to different request Start */
-	pr_info("[SENSOR] %s, hw_name=%s, dmp_on=%d, enable=%d\n", __func__, 
-		st->hw->name, st->chip_config.dmp_on, st->chip_config.enable);
+	pr_debug("%s inv_mpu_resume\n", st->hw->name);
+
 
 	result = 0;
 	if (st->chip_config.dmp_on && st->chip_config.enable) {
@@ -4373,9 +4358,9 @@ static int inv_mpu_suspend(struct device *dev)
 	struct iio_dev *indio_dev = i2c_get_clientdata(to_i2c_client(dev));
 	struct inv_mpu_state *st = iio_priv(indio_dev);
 	int result;
+	u8 d =0;
 	/* add code according to different request Start */
-	pr_info("[SENSOR] %s, hw_name=%s, dmp_on=%d, enable=%d\n", __func__, 
-		st->hw->name, st->chip_config.dmp_on, st->chip_config.enable);
+	pr_debug("%s inv_mpu_suspend\n", st->hw->name);
 	disable_irq(st->client->irq);
 
 	result = 0;
@@ -4390,11 +4375,26 @@ static int inv_mpu_suspend(struct device *dev)
 		/* setup batch mode related during suspend */
 		result = inv_setup_suspend_batchmode(indio_dev, true);
 
+		if (st->sensor[SENSOR_ACCEL].on)
+			st->sensor[SENSOR_ACCEL].send_data(st, false);
+		if (st->sensor[SENSOR_GYRO].on)
+			st->sensor[SENSOR_GYRO].send_data(st, false);
+		if (st->sensor[SENSOR_SIXQ].on)
+			st->sensor[SENSOR_SIXQ].send_data(st, false);
+		if (st->sensor[SENSOR_LPQ].on)
+			st->sensor[SENSOR_LPQ].send_data(st, false);
+
 		/* only in DMP non-batch data mode, turn off the power */
 		if ((!st->batch.on) && (!st->chip_config.smd_enable) &&
 					(!st->ped.on))
 			result |= st->set_power_state(st, false);
 	} else if (st->chip_config.enable) {
+		result = inv_i2c_read(st, REG_INT_ENABLE, 1, &d);
+		if (!result){
+			/* Unmask DRDY */
+			d &= ~BIT_DATA_RDY_EN;
+			inv_i2c_single_write(st, REG_INT_ENABLE, d);
+		}
 		/* in non DMP case, just turn off the power */
 		result |= st->set_power_state(st, false);
 	}
