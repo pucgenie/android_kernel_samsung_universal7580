@@ -47,7 +47,7 @@
 #ifdef DHD_USE_CISINFO
 
 /* File Location to keep each information */
-#define MACINFO "/data/.mac.info"
+#define MACINFO_DATA "/data/.mac.info"
 #define MACINFO_EFS "/efs/wifi/.mac.info"
 #define CIDINFO PLATFORM_PATH".cid.info"
 #define CIDINFO_DATA "/data/.cid.info"
@@ -285,9 +285,7 @@ dhd_set_macaddr_from_file(dhd_pub_t *dhdp)
 {
 	char mac_buf[MAC_BUF_SIZE];
 	char *filepath_efs = MACINFO_EFS;
-#ifdef PLATFORM_SLP
-	char *filepath_mac = MACINFO;
-#endif /* PLATFORM_SLP */
+	char *filepath_data = MACINFO_DATA;
 	int ret;
 	struct dhd_info *dhd;
 	struct ether_addr *mac;
@@ -304,7 +302,9 @@ dhd_set_macaddr_from_file(dhd_pub_t *dhdp)
 	memset(mac_buf, 0, sizeof(mac_buf));
 
 	/* Read MAC address from the specified file */
-	ret = dhd_read_file(filepath_efs, mac_buf, sizeof(mac_buf) - 1);
+	ret = dhd_read_file(filepath_data, mac_buf, sizeof(mac_buf) - 1);
+	if (ret)
+		ret = dhd_read_file(filepath_efs, mac_buf, sizeof(mac_buf) - 1);
 
 	/* Check if the file does not exist or contains invalid data */
 	if (ret || (!ret && strstr(mac_buf, invalid_mac))) {
@@ -321,16 +321,6 @@ dhd_set_macaddr_from_file(dhd_pub_t *dhdp)
 				__FUNCTION__, mac_buf, filepath_efs));
 		}
 	}
-#ifdef PLATFORM_SLP
-	/* Write random MAC address for framework */
-	if (dhd_write_file(filepath_mac, mac_buf, strlen(mac_buf)) < 0) {
-		DHD_ERROR(("%s: MAC address [%s] Failed to write into File:"
-			" %s\n", __FUNCTION__, mac_buf, filepath_mac));
-	} else {
-		DHD_ERROR(("%s: MAC address [%s] written into File: %s\n",
-			__FUNCTION__, mac_buf, filepath_mac));
-	}
-#endif /* PLATFORM_SLP */
 
 	mac_buf[sizeof(mac_buf) - 1] = '\0';
 
@@ -587,7 +577,7 @@ dhd_check_module_mac(dhd_pub_t *dhdp)
 int
 dhd_write_macaddr(struct ether_addr *mac)
 {
-	char *filepath_data = MACINFO;
+	char *filepath_data = MACINFO_DATA;
 	char *filepath_efs = MACINFO_EFS;
 	char mac_buf[MAC_BUF_SIZE];
 	int ret = 0;
