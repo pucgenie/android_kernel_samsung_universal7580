@@ -17,7 +17,7 @@
 #include "exynos7580-s5neo_gpio_07.dtsi"
 
 / {
-	model = "Samsung S5neo revision 06 board based on EXYNOS7580";
+	model = "Samsung S5neo revision 07 board based on EXYNOS7580";
 	model_info-chip = <7580>;
 	model_info-platform = "android";
 	model_info-subtype = "samsung";
