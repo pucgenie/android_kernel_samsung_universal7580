@@ -195,7 +195,6 @@ extern void mmc_release_host(struct mmc_host *host);
 extern int mmc_try_claim_host(struct mmc_host *host);
 
 extern int mmc_flush_cache(struct mmc_card *);
-extern int mmc_bkops_enable(struct mmc_host *host, u8 value);
 extern int mmc_poweroff_notify(struct mmc_card *card, unsigned int notify_type);
 
 extern int mmc_detect_card_removed(struct mmc_host *host);

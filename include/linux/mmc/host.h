@@ -459,9 +459,10 @@ static inline void *mmc_priv(struct mmc_host *host)
 
 static inline void mmc_set_bus_resume_policy(struct mmc_host *host, int manual)
 {
-	if (manual)
+	if (manual) {
 		host->bus_resume_flags |= MMC_BUSRESUME_MANUAL_RESUME;
-	else
+		host->bus_resume_flags &= ~MMC_BUSRESUME_NEEDS_RESUME;
+	} else
 		host->bus_resume_flags &= ~MMC_BUSRESUME_MANUAL_RESUME;
 }
 

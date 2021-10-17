@@ -318,10 +318,6 @@ struct mmc_card {
 
 	unsigned int		sd_bus_speed;	/* Bus Speed Mode set for the card */
 
-	struct device_attribute	bkops_attr;	/* for enable/disable bkops mode */
-	u8			bkops_enable;	/* bkops mode on/off */
-	spinlock_t		bkops_lock;	/* lock for bkops_enable filed */
-
 	struct dentry		*debugfs_root;
 	struct mmc_part	part[MMC_NUM_PHY_PARTITION]; /* physical partitions */
 	unsigned int    nr_parts;
