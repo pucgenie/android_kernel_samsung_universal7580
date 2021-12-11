@@ -119,6 +119,7 @@ enum sec_nfc_wake {
 	SEC_NFC_WAKE_SLEEP = 0,
 	SEC_NFC_WAKE_UP,
 };
+
 enum sec_nfc_npt_mode {
 	SEC_NFC_NPT_OFF = 0,
 	SEC_NFC_NPT_ON,

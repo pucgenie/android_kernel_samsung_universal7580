@@ -70,9 +70,10 @@ struct sec_nfc_i2c_info {};
 
 #define SEC_NFC_GET_INFO(dev) i2c_get_clientdata(to_i2c_client(dev))
 enum sec_nfc_irq {
+	SEC_NFC_SKIP = -1,
 	SEC_NFC_NONE,
 	SEC_NFC_INT,
-	SEC_NFC_SKIP,
+	SEC_NFC_READ_TIMES,
 };
 
 struct sec_nfc_i2c_info {
@@ -139,7 +140,7 @@ static irqreturn_t sec_nfc_irq_thread_fn(int irq, void *dev_id)
 		return IRQ_HANDLED;
 	}
 
-	info->i2c_info.read_irq = SEC_NFC_INT;
+	info->i2c_info.read_irq += SEC_NFC_READ_TIMES;
 	mutex_unlock(&info->i2c_info.read_mutex);
 
 	wake_up_interruptible(&info->i2c_info.read_wait);
@@ -161,8 +162,7 @@ static ssize_t sec_nfc_read(struct file *file, char __user *buf,
 	enum sec_nfc_irq irq;
 	int ret = 0;
 
-	dev_dbg(info->dev, "%s: info: %p, count: %zu\n", __func__,
-		info, count);
+	dev_dbg(info->dev, "%s: count: %zu\n", __func__, count);
 
 #ifdef FEATURE_SEC_NFC_TEST
 	if (on_nfc_test)
@@ -178,6 +178,13 @@ static ssize_t sec_nfc_read(struct file *file, char __user *buf,
 	}
 
 	mutex_lock(&info->i2c_info.read_mutex);
+	if (count == 0) {
+		if (info->i2c_info.read_irq >= SEC_NFC_INT)
+			info->i2c_info.read_irq--;
+		mutex_unlock(&info->i2c_info.read_mutex);
+		goto out;
+	}
+
 	irq = info->i2c_info.read_irq;
 	mutex_unlock(&info->i2c_info.read_mutex);
 	if (irq == SEC_NFC_NONE) {
@@ -213,7 +220,12 @@ static ssize_t sec_nfc_read(struct file *file, char __user *buf,
 		goto read_error;
 	}
 
-	info->i2c_info.read_irq = SEC_NFC_NONE;
+	if (info->i2c_info.read_irq >= SEC_NFC_INT)
+		info->i2c_info.read_irq--;
+
+	if (info->i2c_info.read_irq == SEC_NFC_READ_TIMES)
+		wake_up_interruptible(&info->i2c_info.read_wait);
+
 	mutex_unlock(&info->i2c_info.read_mutex);
 
 	if (copy_to_user(buf, info->i2c_info.buf, ret)) {
@@ -239,8 +251,7 @@ static ssize_t sec_nfc_write(struct file *file, const char __user *buf,
 						struct sec_nfc_info, miscdev);
 	int ret = 0;
 
-	dev_dbg(info->dev, "%s: info: %p, count %zu\n", __func__,
-		info, count);
+	dev_dbg(info->dev, "%s: count %zu\n", __func__, count);
 
 #ifdef FEATURE_SEC_NFC_TEST
 	if (on_nfc_test)
@@ -305,7 +316,7 @@ static unsigned int sec_nfc_poll(struct file *file, poll_table *wait)
 
 	int ret = 0;
 
-	dev_dbg(info->dev, "%s: info: %p\n", __func__, info);
+	dev_dbg(info->dev, "%s\n", __func__);
 
 	mutex_lock(&info->mutex);
 
@@ -319,7 +330,7 @@ static unsigned int sec_nfc_poll(struct file *file, poll_table *wait)
 
 	mutex_lock(&info->i2c_info.read_mutex);
 	irq = info->i2c_info.read_irq;
-	if (irq == SEC_NFC_INT)
+	if (irq == SEC_NFC_READ_TIMES)
 		ret = (POLLIN | POLLRDNORM);
 	mutex_unlock(&info->i2c_info.read_mutex);
 
@@ -383,7 +394,7 @@ int sec_nfc_i2c_probe(struct i2c_client *client)
 	struct device_node *np = dev->of_node;
 	int ret;
 
-	dev_dbg(info->dev, "%s: start: %p\n", __func__, info);
+	dev_dbg(info->dev, "%s\n", __func__);
 
 	info->i2c_info.buflen = SEC_NFC_MAX_BUFFER_SIZE;
 	info->i2c_info.buf = kzalloc(SEC_NFC_MAX_BUFFER_SIZE, GFP_KERNEL);
@@ -416,7 +427,7 @@ int sec_nfc_i2c_probe(struct i2c_client *client)
 	}
 
 	prop = of_find_property(np, "sec-nfc,nfc_clkint", NULL);
-	if(prop) {
+	if (prop) {
 		info->clk_irq = gpio_to_irq(pdata->clk_irq);
 		ret = request_threaded_irq(info->clk_irq, NULL, sec_nfc_clk_irq,
 			IRQF_TRIGGER_RISING | IRQF_ONESHOT, "nfc_clk",
@@ -444,8 +455,7 @@ int sec_nfc_i2c_probe(struct i2c_client *client)
 		}
 	}
 #endif
-
-	dev_dbg(info->dev, "%s: success: %p\n", __func__, info);
+	dev_dbg(info->dev, "%s: success\n", __func__);
 	return 0;
 
 err_irq_req:
@@ -601,8 +611,7 @@ static long sec_nfc_ioctl(struct file *file, unsigned int cmd,
 	unsigned int new = (unsigned int)arg;
 	int ret = 0;
 
-	dev_dbg(info->dev, "%s: info: %p, cmd: 0x%x\n",
-			__func__, info, cmd);
+	dev_dbg(info->dev, "%s: cmd: 0x%x\n", __func__, cmd);
 
 	mutex_lock(&info->mutex);
 
@@ -683,7 +692,7 @@ static int sec_nfc_open(struct inode *inode, struct file *file)
 						struct sec_nfc_info, miscdev);
 	int ret = 0;
 
-	dev_dbg(info->dev, "%s: info : %p" , __func__, info);
+	dev_dbg(info->dev, "%s" , __func__);
 
 	mutex_lock(&info->mutex);
 	if (info->mode != SEC_NFC_MODE_OFF) {
@@ -704,7 +713,7 @@ static int sec_nfc_close(struct inode *inode, struct file *file)
 	struct sec_nfc_info *info = container_of(file->private_data,
 						struct sec_nfc_info, miscdev);
 
-	dev_dbg(info->dev, "%s: info : %p" , __func__, info);
+	dev_dbg(info->dev, "%s" , __func__);
 
 	mutex_lock(&info->mutex);
 	sec_nfc_set_mode(info, SEC_NFC_MODE_OFF);
@@ -786,7 +795,7 @@ static int sec_nfc_parse_dt(struct device *dev,
 	if (prop) {
 		pr_info("%s: irq : %d, firm : %d\n",__func__, pdata->irq, pdata->firm);
 	} else
-		pr_info("%s: clk_req_ addr \n",__func__);
+		pr_info("%s: clk_req_ addr, irq: %d\n", __func__, pdata->irq);
 	return 0;
 }
 #else
@@ -905,7 +914,6 @@ static ssize_t sec_nfc_test_show(struct class *class,
 
 	on_nfc_test = true;
 	nfc_int_wait = false;
-	pr_info("NFC_TEST: mode = %d\n", old_mode);
 
 	sec_nfc_set_mode(g_nfc_info, SEC_NFC_MODE_BOOTLOADER);
 	ret = sec_nfc_i2c_write(cmd, 4);
@@ -1046,7 +1054,7 @@ static int __devinit __sec_nfc_probe(struct device *dev)
 	}
 #endif
 
-	dev_dbg(dev, "%s: success info: %p, pdata %p\n", __func__, info, pdata);
+	dev_dbg(dev, "%s: success\n", __func__);
 
 	return 0;
 
